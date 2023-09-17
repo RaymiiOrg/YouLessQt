@@ -26,6 +26,11 @@ int main(int argc, char *argv[])
 #endif
     QGuiApplication app(argc, argv);
 
+    app.setOrganizationName("Leaf Node");
+    app.setOrganizationDomain("leafnode.nl");
+    app.setApplicationName("YouLessQt");
+    app.setApplicationVersion(QString::number(1.1));
+
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,

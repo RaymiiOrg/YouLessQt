@@ -20,6 +20,8 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Window 2.15
 
+import Qt.labs.settings 1.0
+
 Window {
     id: root
     width: 800
@@ -36,9 +38,9 @@ Window {
     property int rawMaxCount: 300
     property var rawValues: []
     property int rawCount: 0
-//    property int rawLowest: 9999999
-//    property int rawAvg: 0
-//    property int suggestedLwValue: 105
+    //    property int rawLowest: 9999999
+    //    property int rawAvg: 0
+    //    property int suggestedLwValue: 105
 
     property int lvlMaxCount: 300
     property var lvlValues: []
@@ -76,7 +78,10 @@ Window {
         xmlhttp.send()
     }
 
-
+    Settings {
+        property alias youLessIp: youLessIP.text
+        property alias running: getTimer.running
+    }
 
 
     onResponseChanged: {
@@ -104,22 +109,22 @@ Window {
             if(response.hasOwnProperty("pwr")) {
                 if(pwrValues.length > 0 && pwrValues.slice(-1).pop().y !== response.pwr) {
                     pwrValues.push({x: pwrCount, y: response.pwr, xLegend: timeText})
-                    pwrCount++                    
+                    pwrCount++
                 }
             }
-            if(response.hasOwnProperty("raw")) {                
+            if(response.hasOwnProperty("raw")) {
                 rawValues.push({x: rawCount, y: response.raw, xLegend: timeText})
                 rawCount++
 
-//                // https://web.archive.org/web/20230917145547/https://gathering.tweakers.net/forum/view_message/50504265
-//                rawAvg = average(rawValues.map((pwrV) => pwrV.y))
-//                if(response.raw < rawLowest) {
-//                    rawLowest = response.raw
-//                    console.log("low: " + rawLowest)
-//                }
-//                console.log("avg: " + rawAvg)
-//                suggestedLwValue = Math.max(105, ((rawAvg / Math.max(1, rawLowest)) - 10));
-//                console.log("sug: " + suggestedLwValue)
+                //                // https://web.archive.org/web/20230917145547/https://gathering.tweakers.net/forum/view_message/50504265
+                //                rawAvg = average(rawValues.map((pwrV) => pwrV.y))
+                //                if(response.raw < rawLowest) {
+                //                    rawLowest = response.raw
+                //                    console.log("low: " + rawLowest)
+                //                }
+                //                console.log("avg: " + rawAvg)
+                //                suggestedLwValue = Math.max(105, ((rawAvg / Math.max(1, rawLowest)) - 10));
+                //                console.log("sug: " + suggestedLwValue)
             }
 
             if(response.hasOwnProperty("lvl")) {
@@ -211,353 +216,353 @@ Window {
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
             ScrollBar.vertical.policy: ScrollBar.AlwaysOn
 
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 20
-            spacing: 5
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 20
+                spacing: 5
 
-            GridLayout {
-                id: infoRow
-                Layout.preferredWidth: 400
-                Layout.alignment: Qt.AlignTop
-                Layout.margins: 5
-                rowSpacing: 5
-                columnSpacing: 5
-                columns: root.width < 400 ? 1 : 3
-                rows: root.width < 400 ? 3 : 1
+                GridLayout {
+                    id: infoRow
+                    Layout.preferredWidth: 400
+                    Layout.alignment: Qt.AlignTop
+                    Layout.margins: 5
+                    rowSpacing: 5
+                    columnSpacing: 5
+                    columns: root.width < 400 ? 1 : 3
+                    rows: root.width < 400 ? 3 : 1
 
-                TextField {
-                    id: youLessIP
-                    placeholderText: "YouLess IP (192.168.x.y)"
-                    onAccepted: startStopButton.clicked()
-                }
+                    TextField {
+                        id: youLessIP
+                        placeholderText: "YouLess IP (192.168.x.y)"
+                        onAccepted: startStopButton.clicked()
+                    }
 
 
-                Button {
-                    id: startStopButton
-                    text: getTimer.running ? "Stop" : "Start"
-                    Layout.minimumWidth: 120
-                    enabled: youLessIP.text !== ""
-                    onClicked: {
-                        errorText.text = ""
-                        if(getTimer.running) {
-                            getTimer.stop()
-                            getDeviceInfoOnce = false
-                        } else {
-                            getTimer.start()
+                    Button {
+                        id: startStopButton
+                        text: getTimer.running ? "Stop" : "Start"
+                        Layout.minimumWidth: 120
+                        enabled: youLessIP.text !== ""
+                        onClicked: {
+                            errorText.text = ""
+                            if(getTimer.running) {
+                                getTimer.stop()
+                                getDeviceInfoOnce = false
+                            } else {
+                                getTimer.start()
+                            }
+                        }
+                    }
+
+                    Button {
+                        text: "Clear"
+                        Layout.minimumWidth: 120
+                        onClicked: {
+                            pwrCount = 0
+                            pwrValues = []
+                            rawCount = 0
+                            rawValues = []
+                            lvlCount = 0
+                            lvlValues = []
                         }
                     }
                 }
-
-                Button {
-                    text: "Clear"
-                    Layout.minimumWidth: 120
-                    onClicked: {
-                        pwrCount = 0
-                        pwrValues = []
-                        rawCount = 0
-                        rawValues = []
-                        lvlCount = 0
-                        lvlValues = []
-                    }
-                }
-            }
 
 
 
 
                 Item {
                     Layout.preferredHeight: 2
-                Layout.preferredWidth: parent.width
-                Layout.alignment: Qt.AlignTop
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: '#eee'
-                }
-            }
-
-
-            GridLayout {
-                id: deviceInfoRow
-                Layout.preferredWidth: 500
-                Layout.margins: 5
-                rowSpacing: 5
-                columnSpacing: 5
-                Layout.alignment: Qt.AlignTop
-                columns: root.width < 400 ? 1 : 4
-                rows: root.width < 400 ? 4 : 1
-
-                Text {
-                    id: errorText
-                    visible: text !== ""
-                    color: 'red'
-                }
-
-                Text {
-                    id: deviceModelLabel
-                    text: "Model: "
-                }
-                Text {
-                    id:  deviceFwLabel
-                    text: "Fw: "
-                }
-                Text {
-                    id:  deviceMacLabel
-                    text: "MAC: "
-                }
-            }
-
-
-            Rectangle {
-                Layout.preferredHeight: 2
-                Layout.alignment: Qt.AlignTop
-                Layout.preferredWidth: parent.width
-                color: '#eee'
-            }
-
-            GridLayout {
-                id: currentValuesRow
-                Layout.preferredWidth: 500
-                Layout.alignment: Qt.AlignTop
-                Layout.margins: 5
-                rowSpacing: 5
-                columnSpacing: 5
-                columns: root.width < 400 ? 2 : 5
-                rows: root.width < 400 ? 5 : 2
-
-                Text {
-                    id: cntLabel // counter in kWh
-                    textFormat: Text.RichText
-                    text: "... kWh"
-                }
-
-                Text {
-                    id:  detLabel // puls / meetbericht detectie indicatie
-                    color: 'red'
-                    textFormat: Text.RichText
-                }
-
-                Text {
-                    visible: !detLabel.visible
-                    color: 'white'
-                    text: "."
-                }
-
-                Text {
-                    id:  lvlLabel // moving average level (intensity of reflected light on analog meters)
-                    textFormat: Text.RichText
-                    text: "... %"
-                }
-
-                Text {
-                    id:  devLabel // deviation of reflection
-                    textFormat: Text.RichText
-                    text: "( ... %)"
-                }
-
-
-                Text {
-                    id: pwrLabel //  Pwer consumption in Watt
-                    textFormat: Text.RichText
-                    text: "... W"
-                }
-            }
-
-            Item {
-                Layout.preferredHeight: 2
-                Layout.preferredWidth: parent.width
-                Layout.alignment: Qt.AlignTop
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: '#eee'
-                }
-            }
-
-            Item {
-                visible: showRawGraph
-                Layout.alignment: Qt.AlignTop
-                Layout.preferredWidth: parent.width
-                Layout.preferredHeight: 500
-
-
-                LineChart {
-                    id: rawChart
-                    anchors.fill: parent
-
-                    visible:  showRawGraph
-
-                    title:  'Ruwe 10-bit licht sensor reflectie waarde'
-                    yLabel: 'Raw'
-                    xLabel: 'Tijd'
-                    color:  '#BDCF32'
-                    Rectangle {
-                        anchors.fill: parent
-                        color: '#8BD3C7'
-                        opacity: .2
-                    }
-                }
-            }
-
-
-            Item {
-                Layout.preferredHeight: 2
-                Layout.preferredWidth: parent.width
-                Layout.alignment: Qt.AlignTop
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: '#eee'
-                }
-            }
-
-
-
-            GridLayout {
-                id: setLightSensorRow
-                Layout.preferredWidth: 400
-                Layout.alignment: Qt.AlignTop
-                Layout.margins: 5
-                rowSpacing: 5
-                columnSpacing: 5
-                columns: root.width < 400 ? 1 : 2
-                rows: root.width < 400 ? 2 : 1
-
-                TextField {
-                    id: lwValue
-                    placeholderText: "LW waarde (default 180)"
-                    validator: IntValidator{bottom: 105; top: 500;}
-                    onAccepted: setlwValueButton.clicked()
-                }
-
-
-                Button {
-                    id: setlwValueButton
-                    text: "Set LW value"
-                    enabled: lwValue.text !== "" && lwValue.acceptableInput
-                    onClicked: {
-                        doGetRequest("http://" + youLessIP.text + "/M?lw=" + lwValue.text)
-                    }
-                }
-            }
-
-            Item {
-                Layout.preferredHeight: 2
-                Layout.preferredWidth: parent.width
-                Layout.alignment: Qt.AlignTop
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: '#eee'
-                }
-            }
-
-            Item {
-                visible: showRawGraph
-                Layout.alignment: Qt.AlignTop
-                Layout.preferredWidth: parent.width
-                Layout.preferredHeight: 500
-
-
-                LineChart {
-                    id: lvlChart
-                    anchors.fill: parent
-
-                    visible:  showRawGraph
-                    title:  'Licht sensor niveau in procent (moving average)'
-                    yLabel: 'percentage'
-                    xLabel: 'Tijd'
-                    color:  '#CA472F'
-                    Rectangle {
-                        anchors.fill: parent
-                        color: '#E3DBF7'
-                        opacity: .2
-                    }
-                }
-            }
-
-            Item {
-                Layout.preferredHeight: 2
-                Layout.preferredWidth: parent.width
-                Layout.alignment: Qt.AlignTop
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: '#eee'
-                }
-            }
-
-            Item {
-                visible: showPwrGraph
-                Layout.alignment: Qt.AlignTop
-                Layout.preferredWidth: parent.width
-                Layout.preferredHeight: 500
-
-
-                LineChart {
-                    id: wattChart
-                    anchors.fill: parent
-                    title:  'Actueel Vermogen'
-                    yLabel: 'Watt'
-                    xLabel: 'Tijd'
-                    color:  '#9B19F5'
+                    Layout.preferredWidth: parent.width
+                    Layout.alignment: Qt.AlignTop
 
                     Rectangle {
                         anchors.fill: parent
-                        color: '#b2e061'
-                        opacity: .2
+                        color: '#eee'
                     }
                 }
-            }
 
 
-            GridLayout {
-                id: moreButtonsRow
-                Layout.preferredWidth: 500
-                Layout.alignment: Qt.AlignTop
-                Layout.margins: 5
-                rowSpacing: 5
-                columnSpacing: 5
-                columns: root.width < 400 ? 1 : 5
-                rows: root.width < 400 ? 5 : 1
+                GridLayout {
+                    id: deviceInfoRow
+                    Layout.preferredWidth: 500
+                    Layout.margins: 5
+                    rowSpacing: 5
+                    columnSpacing: 5
+                    Layout.alignment: Qt.AlignTop
+                    columns: root.width < 400 ? 1 : 4
+                    rows: root.width < 400 ? 4 : 1
 
-                Button {
-                    text: showPwrGraph ? "Hide Power" : "Show Power"
-                    onClicked: showPwrGraph = !showPwrGraph
-                }
+                    Text {
+                        id: errorText
+                        visible: text !== ""
+                        color: 'red'
+                    }
 
-                Button {
-                    text: showRawGraph ? "Hide Raw" : "Show Raw"
-                    onClicked: showRawGraph = !showRawGraph
-                }
-
-                Button {
-                    text: "Herstart YouLess"
-                    enabled: youLessIP.text !== ""
-                    onClicked: {
-                        getTimer.stop()
-                        doGetRequest("http://" + youLessIP.text + "/S?rb=")
+                    Text {
+                        id: deviceModelLabel
+                        text: "Model: "
+                    }
+                    Text {
+                        id:  deviceFwLabel
+                        text: "Fw: "
+                    }
+                    Text {
+                        id:  deviceMacLabel
+                        text: "MAC: "
                     }
                 }
-            }
 
-            Item {
-                Layout.preferredHeight: 2
-                Layout.preferredWidth: parent.width
-                Layout.alignment: Qt.AlignTop
 
                 Rectangle {
-                    anchors.fill: parent
+                    Layout.preferredHeight: 2
+                    Layout.alignment: Qt.AlignTop
+                    Layout.preferredWidth: parent.width
                     color: '#eee'
                 }
-            }
+
+                GridLayout {
+                    id: currentValuesRow
+                    Layout.preferredWidth: 500
+                    Layout.alignment: Qt.AlignTop
+                    Layout.margins: 5
+                    rowSpacing: 5
+                    columnSpacing: 5
+                    columns: root.width < 400 ? 2 : 5
+                    rows: root.width < 400 ? 5 : 2
+
+                    Text {
+                        id: cntLabel // counter in kWh
+                        textFormat: Text.RichText
+                        text: "... kWh"
+                    }
+
+                    Text {
+                        id:  detLabel // puls / meetbericht detectie indicatie
+                        color: 'red'
+                        textFormat: Text.RichText
+                    }
+
+                    Text {
+                        visible: !detLabel.visible
+                        color: 'white'
+                        text: "."
+                    }
+
+                    Text {
+                        id:  lvlLabel // moving average level (intensity of reflected light on analog meters)
+                        textFormat: Text.RichText
+                        text: "... %"
+                    }
+
+                    Text {
+                        id:  devLabel // deviation of reflection
+                        textFormat: Text.RichText
+                        text: "( ... %)"
+                    }
 
 
-            Item {
-                Layout.alignment: Qt.AlignTop
-                Layout.preferredWidth: parent.width
-                Layout.preferredHeight: 600
+                    Text {
+                        id: pwrLabel //  Pwer consumption in Watt
+                        textFormat: Text.RichText
+                        text: "... W"
+                    }
+                }
+
+                Item {
+                    Layout.preferredHeight: 2
+                    Layout.preferredWidth: parent.width
+                    Layout.alignment: Qt.AlignTop
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: '#eee'
+                    }
+                }
+
+                Item {
+                    visible: showRawGraph
+                    Layout.alignment: Qt.AlignTop
+                    Layout.preferredWidth: parent.width
+                    Layout.preferredHeight: 500
+
+
+                    LineChart {
+                        id: rawChart
+                        anchors.fill: parent
+
+                        visible:  showRawGraph
+
+                        title:  'Ruwe 10-bit licht sensor reflectie waarde'
+                        yLabel: 'Raw'
+                        xLabel: 'Tijd'
+                        color:  '#BDCF32'
+                        Rectangle {
+                            anchors.fill: parent
+                            color: '#8BD3C7'
+                            opacity: .2
+                        }
+                    }
+                }
+
+
+                Item {
+                    Layout.preferredHeight: 2
+                    Layout.preferredWidth: parent.width
+                    Layout.alignment: Qt.AlignTop
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: '#eee'
+                    }
+                }
+
+
+
+                GridLayout {
+                    id: setLightSensorRow
+                    Layout.preferredWidth: 400
+                    Layout.alignment: Qt.AlignTop
+                    Layout.margins: 5
+                    rowSpacing: 5
+                    columnSpacing: 5
+                    columns: root.width < 400 ? 1 : 2
+                    rows: root.width < 400 ? 2 : 1
+
+                    TextField {
+                        id: lwValue
+                        placeholderText: "LW waarde (default 180)"
+                        validator: IntValidator{bottom: 105; top: 500;}
+                        onAccepted: setlwValueButton.clicked()
+                    }
+
+
+                    Button {
+                        id: setlwValueButton
+                        text: "Set LW value"
+                        enabled: lwValue.text !== "" && lwValue.acceptableInput
+                        onClicked: {
+                            doGetRequest("http://" + youLessIP.text + "/M?lw=" + lwValue.text)
+                        }
+                    }
+                }
+
+                Item {
+                    Layout.preferredHeight: 2
+                    Layout.preferredWidth: parent.width
+                    Layout.alignment: Qt.AlignTop
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: '#eee'
+                    }
+                }
+
+                Item {
+                    visible: showRawGraph
+                    Layout.alignment: Qt.AlignTop
+                    Layout.preferredWidth: parent.width
+                    Layout.preferredHeight: 500
+
+
+                    LineChart {
+                        id: lvlChart
+                        anchors.fill: parent
+
+                        visible:  showRawGraph
+                        title:  'Licht sensor niveau in procent (moving average)'
+                        yLabel: 'percentage'
+                        xLabel: 'Tijd'
+                        color:  '#CA472F'
+                        Rectangle {
+                            anchors.fill: parent
+                            color: '#E3DBF7'
+                            opacity: .2
+                        }
+                    }
+                }
+
+                Item {
+                    Layout.preferredHeight: 2
+                    Layout.preferredWidth: parent.width
+                    Layout.alignment: Qt.AlignTop
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: '#eee'
+                    }
+                }
+
+                Item {
+                    visible: showPwrGraph
+                    Layout.alignment: Qt.AlignTop
+                    Layout.preferredWidth: parent.width
+                    Layout.preferredHeight: 500
+
+
+                    LineChart {
+                        id: wattChart
+                        anchors.fill: parent
+                        title:  'Actueel Vermogen'
+                        yLabel: 'Watt'
+                        xLabel: 'Tijd'
+                        color:  '#9B19F5'
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: '#b2e061'
+                            opacity: .2
+                        }
+                    }
+                }
+
+
+                GridLayout {
+                    id: moreButtonsRow
+                    Layout.preferredWidth: 500
+                    Layout.alignment: Qt.AlignTop
+                    Layout.margins: 5
+                    rowSpacing: 5
+                    columnSpacing: 5
+                    columns: root.width < 400 ? 1 : 5
+                    rows: root.width < 400 ? 5 : 1
+
+                    Button {
+                        text: showPwrGraph ? "Hide Power" : "Show Power"
+                        onClicked: showPwrGraph = !showPwrGraph
+                    }
+
+                    Button {
+                        text: showRawGraph ? "Hide Raw" : "Show Raw"
+                        onClicked: showRawGraph = !showRawGraph
+                    }
+
+                    Button {
+                        text: "Herstart YouLess"
+                        enabled: youLessIP.text !== ""
+                        onClicked: {
+                            getTimer.stop()
+                            doGetRequest("http://" + youLessIP.text + "/S?rb=")
+                        }
+                    }
+                }
+
+                Item {
+                    Layout.preferredHeight: 2
+                    Layout.preferredWidth: parent.width
+                    Layout.alignment: Qt.AlignTop
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: '#eee'
+                    }
+                }
+
+
+                Item {
+                    Layout.alignment: Qt.AlignTop
+                    Layout.preferredWidth: parent.width
+                    Layout.preferredHeight: 600
 
                     Text {
                         anchors.fill: parent
