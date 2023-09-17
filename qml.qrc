@@ -4,5 +4,7 @@
         <file>LineChart.qml</file>
         <file>CollapsableCard.qml</file>
         <file>siemens-red.png</file>
+        <file>rawmon-calcLSvalue.png</file>
+        <file>rawmon-wrong.png</file>
     </qresource>
 </RCC>

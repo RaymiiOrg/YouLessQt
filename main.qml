@@ -36,6 +36,9 @@ Window {
     property int rawMaxCount: 300
     property var rawValues: []
     property int rawCount: 0
+//    property int rawLowest: 9999999
+//    property int rawAvg: 0
+//    property int suggestedLwValue: 105
 
     property int lvlMaxCount: 300
     property var lvlValues: []
@@ -74,7 +77,11 @@ Window {
     }
 
 
+
+
     onResponseChanged: {
+        const average = arr => arr.reduce( ( previous, current ) => previous + current, 0 ) / arr.length;
+
         if(response !== undefined) {
             var minutes = new Date().getMinutes();
             minutes = minutes > 9 ? minutes : '0' + minutes;
@@ -97,12 +104,22 @@ Window {
             if(response.hasOwnProperty("pwr")) {
                 if(pwrValues.length > 0 && pwrValues.slice(-1).pop().y !== response.pwr) {
                     pwrValues.push({x: pwrCount, y: response.pwr, xLegend: timeText})
-                    pwrCount++
+                    pwrCount++                    
                 }
             }
-            if(response.hasOwnProperty("raw")) {
+            if(response.hasOwnProperty("raw")) {                
                 rawValues.push({x: rawCount, y: response.raw, xLegend: timeText})
                 rawCount++
+
+//                // https://web.archive.org/web/20230917145547/https://gathering.tweakers.net/forum/view_message/50504265
+//                rawAvg = average(rawValues.map((pwrV) => pwrV.y))
+//                if(response.raw < rawLowest) {
+//                    rawLowest = response.raw
+//                    console.log("low: " + rawLowest)
+//                }
+//                console.log("avg: " + rawAvg)
+//                suggestedLwValue = Math.max(105, ((rawAvg / Math.max(1, rawLowest)) - 10));
+//                console.log("sug: " + suggestedLwValue)
             }
 
             if(response.hasOwnProperty("lvl")) {
@@ -184,8 +201,8 @@ Window {
                 Layout.margins: 5
                 rowSpacing: 5
                 columnSpacing: 5
-                columns: root.width < 400 ? 1 : 2
-                rows: root.width < 400 ? 2 : 1
+                columns: root.width < 400 ? 1 : 3
+                rows: root.width < 400 ? 3 : 1
 
                 TextField {
                     id: youLessIP
@@ -197,7 +214,7 @@ Window {
                 Button {
                     id: startStopButton
                     text: getTimer.running ? "Stop" : "Start"
-                    Layout.minimumWidth: 200
+                    Layout.minimumWidth: 120
                     enabled: youLessIP.text !== ""
                     onClicked: {
                         errorText.text = ""
@@ -207,6 +224,19 @@ Window {
                         } else {
                             getTimer.start()
                         }
+                    }
+                }
+
+                Button {
+                    text: "Clear"
+                    Layout.minimumWidth: 120
+                    onClicked: {
+                        pwrCount = 0
+                        pwrValues = []
+                        rawCount = 0
+                        rawValues = []
+                        lvlCount = 0
+                        lvlValues = []
                     }
                 }
             }
@@ -221,7 +251,7 @@ Window {
                 id: helpTextColumn
                 collapsed: true
                 Column {
-                    height: 2200
+                    height: 5200
                     anchors.left: parent.left
                     anchors.right: parent.right
                     Text {
@@ -239,7 +269,7 @@ Helpt de YouLess energiemeter goed op de analoge
 (draaischijf) meter plakken door de ruwe sensorwaarde
 en relevante sensorwaardes te tonen zodat men kan zien
 wanneer een puls gedetecteerd wordt, zonder een Windows 7
-gadget te installeren. Ook is hiermee de LS waarde direct
+gadget te installeren. Ook is hiermee de LW waarde direct
 aan te passen op de YouLess, waarna het effect direct in
 de grafiek te zien is. Gezien dit een Android applicatie is
 (evenals Windows) is dit makkelijker direct in de meterkast
@@ -258,12 +288,12 @@ zullen in de grafieken hier ook te zien zijn.
 Vul het IP of de hostname van de YouLess in, druk op Start en
 de grafieken worden zichtbaar, evenals wat model informatie
 (MAC, firmware, etc) en de ruwe waardes. De rode stip geeft
-aan dat er een puls gedetecteerd is. Met de 'Set LS' knop
-kun je LS waarde (zoals hieronder beschreven) direct instellen.
+aan dat er een puls gedetecteerd is. Met de 'Set LW' knop
+kun je LW waarde (zoals hieronder beschreven) direct instellen.
 
 <p/>
 
-De huidige LS waarde is niet op te vragen via de API, de default
+De huidige LW waarde is niet op te vragen via de API, de default
 is 180.
 
 <p/>
@@ -378,6 +408,33 @@ worden afgeleid wat een optimale waarde is voor lw.
 Einde Quote
 <p/>
 
+Als aanvulling nog een afbeelding van een verkeerd uitgelijnde YouLess
+waarbij geen pulsen gedetecteerd werden. Via:
+https://web.archive.org/web/20230917145340/https://gathering.tweakers.net/forum/view_message/54740479
+<p />
+"
+                }
+                        Image {
+                            id: img2
+                            anchors.top: helpText2.bottom
+                            anchors.topMargin: 10
+                            width: 400
+                            height: 300
+                            source: "qrc:///rawmon-wrong.png"
+                        }
+
+
+                        Text {
+                            id: helpText3
+                            anchors.topMargin: 10
+                            anchors.top: img2.bottom
+                            wrapMode: Text.WordWrap
+                            width: parent.width
+                            font.pixelSize: 14
+                            horizontalAlignment: Text.AlignLeft
+                            textFormat: TextEdit.MarkdownText
+                            text: "
+<p/>
 License: GNU GPLv3
 <p/>
 
@@ -557,19 +614,19 @@ Source: https://github.com/RaymiiOrg/YouLessQt
                 rows: root.width < 400 ? 2 : 1
 
                 TextField {
-                    id: lsValue
-                    placeholderText: "LS waarde (default 180)"
-                    validator: IntValidator{bottom: 105; top: 200;}
-                    onAccepted: setLsValueButton.clicked()
+                    id: lwValue
+                    placeholderText: "LW waarde (default 180)"
+                    validator: IntValidator{bottom: 105; top: 500;}
+                    onAccepted: setlwValueButton.clicked()
                 }
 
 
                 Button {
-                    id: setLsValueButton
-                    text: "Set LS value"
-                    enabled: lsValue.text !== "" && lsValue.acceptableInput
+                    id: setlwValueButton
+                    text: "Set LW value"
+                    enabled: lwValue.text !== "" && lwValue.acceptableInput
                     onClicked: {
-                        doGetRequest("http://" + youLessIP.text + "/M?lw=" + lsValue.text)
+                        doGetRequest("http://" + youLessIP.text + "/M?lw=" + lwValue.text)
                     }
                 }
             }

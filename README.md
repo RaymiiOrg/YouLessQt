@@ -133,6 +133,18 @@ worden afgeleid wat een optimale waarde is voor lw.
 Einde Quote
 <p/>
 
+
+Als extra aanvulling een plaatje van de RawMon widget
+waarbij er geen pulsen gedetecteerd worden:
+
+![](rawmon-wrong.png)
+
+
+[Bron](https://gathering.tweakers.net/forum/view_message/54740479)
+
+
+
+
 License: GNU GPLv3
 <p/>
 
